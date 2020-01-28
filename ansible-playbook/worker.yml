@@ -1,0 +1,6 @@
+- name: Worker
+  hosts: www-worker
+  become: true
+  roles:
+   - kube-base
+   - kube-worker

@@ -1,0 +1,43 @@
+- name: Initialize kubeadm 
+  shell: |
+    kubeadm reset -f 
+    kubeadm init
+  args:
+    creates: /etc/kube-join.sh
+  register: kubeadm_out
+
+
+- name: Make .kube directory
+  file:
+    name: $HOME/.kube
+    state: directory
+
+- name: copy kubeconfig
+  shell: |
+      cp /etc/kubernetes/admin.conf $HOME/.kube/config
+      chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+- name: setup weave and wait for core DNS to up
+  shell: |
+    kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+    kubectl rollout status deployment/coredns -n kube-system
+
+- name: Create join command
+  lineinfile:
+    path: /etc/kube-join.sh
+    line: "{{ kubeadm_out.stdout_lines[-2:] |  join(' ') | regex_replace('\\\\', '') }}"
+    create: yes
+  when: kubeadm_out.stdout.find("kubeadm join") != -1
+
+- name: Get join command
+  fetch:
+    src: /etc/kube-join.sh 
+    dest: ./kubeadm-join.sh
+    flat: yes
+
+- name: Get configs
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: ./config
+    flat: yes

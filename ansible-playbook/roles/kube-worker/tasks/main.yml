@@ -1,0 +1,16 @@
+- name: Copy join command
+  copy:
+    src: ./kubeadm-join.sh
+    dest: /etc/kubeadm-join.sh
+
+- name: Join k8 cluster
+  shell: >
+     bash /etc/kubeadm-join.sh
+  args:
+    creates: /etc/k8-joined
+
+- name: Successfully joined
+  file:
+    state: touch
+    path: /etc/k8-joined
+

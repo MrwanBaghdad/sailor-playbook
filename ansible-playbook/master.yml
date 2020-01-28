@@ -1,0 +1,6 @@
+- name: Master
+  hosts: www-controller
+  become: true
+  roles:
+   - kube-base
+   - kube-master
